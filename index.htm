@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Seguimiento Proyectos — Colgas</title>
+<title>Torre de Control — Colgas</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -15,24 +15,37 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); font-size: 14px; -webkit-tap-highlight-color: transparent; }
 
-  /* Navigation */
-  .nav { background: var(--primary); padding: 0 1rem; display: flex; flex-direction: column; justify-content: center; height: auto; min-height: 65px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  .nav-brand { font-weight: 800; font-size: 1rem; text-align: center; padding: 10px 0 5px 0; letter-spacing: 0.5px; }
-  .nav-tabs { display: flex; justify-content: center; width: 100%; }
-  .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 10px 15px; cursor: pointer; font-weight: 600; flex: 1; border-bottom: 4px solid transparent; transition: 0.2s; font-size: 13px; }
+  /* Ajuste de la barra superior y el LOGO */
+  .nav { background: var(--primary); padding: 0.5rem 1rem; display: flex; flex-direction: column; align-items: center; min-height: 80px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  
+  .nav-brand { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 8px;
+  }
+  
+  .logo-header { 
+    height: 40px; /* <--- ESTO ES LO QUE CONTROLA EL TAMAÑO GIGANTE */
+    width: auto; 
+    object-fit: contain;
+    filter: brightness(0) invert(1); /* Opcional: vuelve el logo blanco si es oscuro */
+  }
+
+  .nav-tabs { display: flex; justify-content: center; width: 100%; max-width: 400px; }
+  .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 8px 15px; cursor: pointer; font-weight: 600; flex: 1; border-bottom: 4px solid transparent; transition: 0.2s; font-size: 13px; }
   .tab-btn.active { color: white; border-bottom-color: var(--accent); }
 
   .container { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
   .hidden { display: none; }
 
-  /* KPI Cards */
+  /* Estilos de las tarjetas */
   .kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
   @media (min-width: 768px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
   
-  .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
   .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-  /* Card Style */
   .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .card-header { padding: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; cursor: pointer; background: white; gap: 10px; }
   .card-body { padding: 1rem; border-top: 1px solid var(--border); }
@@ -69,7 +82,7 @@
 <nav class="nav">
   <div class="nav-brand">
     <img src="LOGOS-4-MARCAS_Mesa-de-trabajo-1.png" alt="Colgas" class="logo-header">
-    <span>| SEGUIMIENTO PROYECTOS</span>
+    <span style="font-weight: 800; font-size: 0.9rem;">| TORRE DE CONTROL</span>
   </div>
   <div class="nav-tabs">
     <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
@@ -97,7 +110,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <script>
-// CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDqJ_ypWjmWPJbe65pCW_GqPCzZCNh4zsg",
   authDomain: "gestion-de-proyectos-3312c.firebaseapp.com",
@@ -114,7 +126,6 @@ const db = firebase.database();
 let projects = [];
 let openCards = new Set(); 
 
-// Escuchar cambios de la nube
 db.ref("projects").on("value", (snapshot) => {
   const data = snapshot.val();
   projects = data ? Object.values(data) : [];
@@ -156,7 +167,7 @@ function updateProjectStatus(pid, status) {
 function renderProjects() {
   const container = document.getElementById("projectsList");
   if(projects.length === 0) {
-    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Cargando...</p>`;
+    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Conectando...</p>`;
     return;
   }
   container.innerHTML = projects.map(p => {
