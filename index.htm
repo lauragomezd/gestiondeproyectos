@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Seguimiento Proyectos — Colgas</title>
+<title>Torre de Control — Colgas</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -15,7 +15,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); font-size: 14px; -webkit-tap-highlight-color: transparent; }
 
-  /* BARRA SUPERIOR */
+  /* BARRA SUPERIOR FIJA */
   .nav { 
     background: var(--primary); 
     padding: 10px 1rem; 
@@ -27,32 +27,42 @@
     top: 0; 
     z-index: 100; 
     box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+    min-height: 90px;
   }
   
   .nav-brand { 
     display: flex; 
     align-items: center; 
-    gap: 10px; 
+    gap: 12px; 
     margin-bottom: 10px;
   }
 
-  .brand-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px; white-space: nowrap; }
+  /* LOGO CONTROLADO: Aquí le pusimos el freno de mano */
+  .logo-header { 
+    height: 35px !important; 
+    width: auto !important; 
+    object-fit: contain;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
 
-  .nav-tabs { display: flex; justify-content: center; width: 100%; max-width: 500px; }
+  .brand-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px; }
+
+  .nav-tabs { display: flex; justify-content: center; width: 100%; max-width: 400px; }
   .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 8px 15px; cursor: pointer; font-weight: 600; flex: 1; border-bottom: 4px solid transparent; transition: 0.2s; font-size: 13px; }
   .tab-btn.active { color: white; border-bottom-color: var(--accent); }
 
   .container { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
   .hidden { display: none; }
 
-  /* KPI Cards */
+  /* TARJETAS Y KPIS */
   .kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
   @media (min-width: 768px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
   
   .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
   .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
-  /* Card Style */
   .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .card-header { padding: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; cursor: pointer; background: white; gap: 10px; }
   .card-body { padding: 1rem; border-top: 1px solid var(--border); }
@@ -88,12 +98,12 @@
 
 <nav class="nav">
   <div class="nav-brand">
-    <img src="LOGOS-4-MARCAS_Mesa-de-trabajo-1.png" alt="Colgas" style="height: 35px !important; width: auto !important; object-fit: contain;">
+    <img src="LOGOS-4-MARCAS_Mesa-de-trabajo-1.png" alt="Colgas" class="logo-header">
     <span class="brand-text">| TORRE DE CONTROL</span>
   </div>
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
-    <button class="tab-btn" onclick="switchTab('gestion', this)">Gestión</button>
+    <button id="btn-dashboard" class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
+    <button id="btn-gestion" class="tab-btn" onclick="switchTab('gestion', this)">Gestión</button>
   </div>
 </nav>
 
@@ -117,7 +127,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <script>
-// CONFIGURACIÓN FIREBASE
+// CONFIGURACIÓN ÚNICA
 const firebaseConfig = {
   apiKey: "AIzaSyDqJ_ypWjmWPJbe65pCW_GqPCzZCNh4zsg",
   authDomain: "gestion-de-proyectos-3312c.firebaseapp.com",
@@ -134,7 +144,7 @@ const db = firebase.database();
 let projects = [];
 let openCards = new Set(); 
 
-// Escuchar cambios de la nube
+// ESCUCHAR LA NUBE
 db.ref("projects").on("value", (snapshot) => {
   const data = snapshot.val();
   projects = data ? Object.values(data) : [];
@@ -144,6 +154,7 @@ db.ref("projects").on("value", (snapshot) => {
 
 function save() { db.ref("projects").set(projects); }
 
+// CAMBIO DE PESTAÑAS SEGURO
 function switchTab(tab, btn) {
   document.getElementById('view-gestion').classList.toggle('hidden', tab !== 'gestion');
   document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
@@ -161,7 +172,7 @@ function addProject() {
 }
 
 function deleteProject(pid) {
-  if(confirm("¿Eliminar proyecto?")) {
+  if(confirm("¿Eliminar proyecto definitivamente?")) {
     projects = projects.filter(p => p.id !== pid);
     openCards.delete(pid.toString());
     save();
@@ -169,14 +180,17 @@ function deleteProject(pid) {
 }
 
 function updateProjectStatus(pid, status) {
-  projects.find(p => p.id === pid).status = status;
-  save();
+  const p = projects.find(proj => proj.id === pid);
+  if(p) {
+    p.status = status;
+    save();
+  }
 }
 
 function renderProjects() {
   const container = document.getElementById("projectsList");
   if(projects.length === 0) {
-    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Cargando...</p>`;
+    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">No hay proyectos creados.</p>`;
     return;
   }
   container.innerHTML = projects.map(p => {
@@ -217,7 +231,7 @@ function addBlocker(pid) {
   const type = document.getElementById(`ntype-${pid}`).value;
   const text = document.getElementById(`ntext-${pid}`).value;
   if(!text) return;
-  const p = projects.find(p => p.id === pid);
+  const p = projects.find(proj => proj.id === pid);
   if(!p.blockers) p.blockers = [];
   p.blockers.push({ id: Date.now(), type, text, comments: [] });
   openCards.add(pid.toString());
@@ -248,85 +262,4 @@ function renderBlockers(p) {
           </div>
         `).join('')}
       </div>
-      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px">
-        <input type="text" id="ctext-${b.id}" placeholder="Seguimiento...">
-        <button class="btn btn-primary" style="padding: 10px;" onclick="addComment(${p.id}, ${b.id})">Anotar</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function addComment(pid, bid) {
-  const text = document.getElementById(`ctext-${bid}`).value;
-  if(!text) return;
-  const date = new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
-  const b = projects.find(p=>p.id===pid).blockers.find(b=>b.id===bid);
-  if(!b.comments) b.comments = [];
-  b.comments.push({ text, status: 'pendiente', date });
-  openCards.add(pid.toString());
-  save();
-}
-
-function updateCommentStatus(pid, bid, cIdx, status) {
-  projects.find(p=>p.id===pid).blockers.find(b=>b.id===bid).comments[cIdx].status = status;
-  save();
-}
-
-function renderDashboard() {
-  const actives = projects.filter(p => p.status !== 'completado').length;
-  const riesgo = projects.filter(p => p.status === 'en riesgo').length;
-  const totalInt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Interno').length, 0);
-  const totalExt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Externo').length, 0);
-
-  document.getElementById("kpiRow").innerHTML = `
-    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">ACTIVOS</span><div class="kpi-val">${actives}</div></div>
-    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">RIESGO</span><div class="kpi-val" style="color:var(--danger)">${riesgo}</div></div>
-    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">INT.</span><div class="kpi-val">${totalInt}</div></div>
-    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">EXT.</span><div class="kpi-val">${totalExt}</div></div>
-  `;
-
-  document.getElementById("dashGrid").innerHTML = projects.map(p => {
-    let allLogs = [];
-    if(p.blockers) p.blockers.forEach(b => (b.comments || []).forEach(c => allLogs.push({ ...c, blockerText: b.text })));
-    allLogs.reverse();
-    return `
-      <div class="summary-card border-${p.status.split(' ')[1] || p.status}">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <h3 style="font-size:1.1rem; flex:1; padding-right:10px;">${p.name}</h3>
-          <span class="tag" style="background:#f1f5f9">${p.status}</span>
-        </div>
-        <div style="margin-top:8px; display:flex; gap:10px; font-size:11px; color:var(--text-muted)">
-          <span><b>${p.blockers ? p.blockers.length : 0}</b> Bloqueos</span>
-        </div>
-        <div class="dash-log-section">
-          ${allLogs.length > 0 ? allLogs.map(l => `
-            <div class="dash-log-item">
-              <span style="font-weight:700; color:${l.status==='hecho'?'var(--success)':l.status==='atrasado'?'var(--danger)':'var(--warning)'}">${l.status.toUpperCase()}</span> | <small>${l.date}</small><br>
-              <span style="display:block; margin-top:2px;">» ${l.text}</span>
-            </div>
-          `).join('') : '<div style="font-size:11px; color:var(--text-muted); padding:5px 0;">Sin comentarios.</div>'}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function toggleBody(id, pid) {
-  const el = document.getElementById(id);
-  el.classList.toggle('hidden');
-  if (el.classList.contains('hidden')) openCards.delete(pid.toString());
-  else openCards.add(pid.toString());
-}
-
-function deleteBlocker(pid, bid) {
-  if(confirm("¿Eliminar bloqueo?")) {
-    const p = projects.find(p=>p.id===pid);
-    p.blockers = p.blockers.filter(b=>b.id!==bid);
-    save();
-  }
-}
-
-renderDashboard();
-</script>
-</body>
-</html>
+      <div style="
