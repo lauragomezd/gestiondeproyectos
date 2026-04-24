@@ -39,9 +39,6 @@
   .tag-interno { background: #fef3c7; color: #92400e; }
   .tag-externo { background: #e0f2fe; color: #075985; }
 
-  .form-group-inline { display: flex; flex-direction: column; gap: 8px; }
-  @media (min-width: 600px) { .form-group-inline { flex-direction: row; } }
-  
   select, input, textarea { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; width: 100%; font-size: 14px; }
   
   .status-select { 
@@ -54,15 +51,9 @@
   .dash-log-section { margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 8px; max-height: 250px; overflow-y: auto; border: 1px solid #edf2f7; }
   .dash-log-item { font-size: 12px; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
 
-  .border-curso { border-left-color: var(--success); }
-  .border-riesgo { border-left-color: var(--danger); }
-  .border-pausado { border-left-color: var(--warning); }
-  .border-completado { border-left-color: var(--text-muted); }
-
   .btn { padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 14px; text-align: center; }
   .btn-primary { background: var(--primary); color: white; width: 100%; }
   @media (min-width: 600px) { .btn-primary { width: auto; } }
-  
   .btn-danger-outline { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 10px; font-size: 11px; }
 
   .comment-log { margin-top: 10px; border-left: 2px solid var(--border); padding-left: 0.75rem; }
@@ -99,7 +90,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <script>
-// TU CONFIGURACIÓN DE FIREBASE
+// CONFIGURACIÓN DE FIREBASE (TU DATA)
 const firebaseConfig = {
   apiKey: "AIzaSyDqJ_ypWjmWPJbe65pCW_GqPCzZCNh4zsg",
   authDomain: "gestion-de-proyectos-3312c.firebaseapp.com",
@@ -110,12 +101,12 @@ const firebaseConfig = {
   measurementId: "G-1VYCWZ0KMR"
 };
 
-// Inicializar Firebase
+// Inicialización
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let projects = [];
-let openCards = new Set(); // Para recordar qué tarjetas están abiertas
+let openCards = new Set(); // <--- TRUCO: Aquí guardamos qué proyectos están abiertos
 
 // Escuchar cambios en tiempo real
 db.ref("projects").on("value", (snapshot) => {
@@ -141,8 +132,8 @@ function switchTab(tab, btn) {
 function addProject() {
   const name = prompt("Nombre del Proyecto:");
   if(!name) return;
-  const newId = Date.now();
-  projects.push({ id: newId, name, status: 'en curso', blockers: [] });
+  const id = Date.now();
+  projects.push({ id: id, name, status: 'en curso', blockers: [] });
   save();
 }
 
@@ -162,4 +153,40 @@ function updateProjectStatus(pid, status) {
 function renderProjects() {
   const container = document.getElementById("projectsList");
   if(projects.length === 0) {
-    container.innerHTML = `<p
+    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Conectando con la nube o sin proyectos...</p>`;
+    return;
+  }
+  container.innerHTML = projects.map(p => {
+    // Si el ID está en el Set, no le ponemos la clase "hidden"
+    const isVisible = openCards.has(p.id.toString()) ? "" : "hidden";
+    
+    return `
+    <div class="card" id="card-${p.id}">
+      <div class="card-header" onclick="toggleBody('body-${p.id}', '${p.id}')">
+        <div style="flex: 1; min-width: 200px;">
+           <strong style="font-size:1.1rem; display:block; margin-bottom:5px;">${p.name}</strong>
+           <select onclick="event.stopPropagation()" onchange="updateProjectStatus(${p.id}, this.value)" style="padding:5px; font-size:12px; width: auto;">
+             <option value="en curso" ${p.status==='en curso'?'selected':''}>En curso</option>
+             <option value="en riesgo" ${p.status==='en riesgo'?'selected':''}>En riesgo</option>
+             <option value="pausado" ${p.status==='pausado'?'selected':''}>Pausado</option>
+             <option value="completado" ${p.status==='completado'?'selected':''}>Completado</option>
+           </select>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center">
+          <button class="btn-danger-outline" onclick="event.stopPropagation(); deleteProject(${p.id})">Borrar</button>
+          <span style="font-size: 1.2rem;">▼</span>
+        </div>
+      </div>
+      <div class="card-body ${isVisible}" id="body-${p.id}">
+        <div style="background:#f1f5f9; padding:1rem; border-radius:8px; margin-bottom:1.5rem">
+          <h4 style="margin-bottom:10px; font-size: 0.9rem;">Registrar Bloqueo</h4>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <select id="ntype-${p.id}" style="width:120px;"><option>Interno</option><option>Externo</option></select>
+            <input type="text" id="ntext-${p.id}" placeholder="Descripción del bloqueo...">
+            <button class="btn btn-primary" onclick="addBlocker(${p.id})">Añadir</button>
+          </div>
+        </div>
+        <div id="blockers-${p.id}">${renderBlockers(p)}</div>
+      </div>
+    </div>
+  `;
