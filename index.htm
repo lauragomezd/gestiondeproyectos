@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Torre de Control — Colgas</title>
+<title>Seguimiento Proyectos — Colgas</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -15,54 +15,42 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); font-size: 14px; -webkit-tap-highlight-color: transparent; }
 
-  /* BARRA SUPERIOR FIJA */
-  .nav { 
-    background: var(--primary); 
-    padding: 10px 1rem; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    color: white; 
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-    min-height: 90px;
-  }
+  /* Navigation - Centrado y con Logo */
+  .nav { background: var(--primary); padding: 0.5rem 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 85px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
   
   .nav-brand { 
     display: flex; 
     align-items: center; 
     gap: 12px; 
-    margin-bottom: 10px;
+    padding: 5px 0;
   }
 
-  /* LOGO CONTROLADO: Aquí le pusimos el freno de mano */
   .logo-header { 
-    height: 35px !important; 
-    width: auto !important; 
+    height: 38px; /* Ajuste ideal para que se vea bien en celulares y PC */
+    width: auto; 
     object-fit: contain;
-    background: white;
+    background: white; /* Fondito blanco para que el logo resalte */
     padding: 4px 8px;
-    border-radius: 6px;
+    border-radius: 8px;
   }
 
-  .brand-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px; }
+  .brand-text { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px; opacity: 0.9; }
 
-  .nav-tabs { display: flex; justify-content: center; width: 100%; max-width: 400px; }
-  .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 8px 15px; cursor: pointer; font-weight: 600; flex: 1; border-bottom: 4px solid transparent; transition: 0.2s; font-size: 13px; }
+  .nav-tabs { display: flex; justify-content: center; width: 100%; max-width: 400px; margin-top: 5px; }
+  .tab-btn { background: none; border: none; color: rgba(255,255,255,0.6); padding: 10px 15px; cursor: pointer; font-weight: 600; flex: 1; border-bottom: 4px solid transparent; transition: 0.2s; font-size: 13px; }
   .tab-btn.active { color: white; border-bottom-color: var(--accent); }
 
   .container { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
   .hidden { display: none; }
 
-  /* TARJETAS Y KPIS */
+  /* KPI Cards */
   .kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
   @media (min-width: 768px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
   
-  .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+  .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
   .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
+  /* Card Style */
   .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .card-header { padding: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; cursor: pointer; background: white; gap: 10px; }
   .card-body { padding: 1rem; border-top: 1px solid var(--border); }
@@ -80,6 +68,11 @@
   .dash-log-section { margin-top: 12px; background: #f9fafb; padding: 10px; border-radius: 8px; max-height: 250px; overflow-y: auto; border: 1px solid #edf2f7; }
   .dash-log-item { font-size: 12px; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
 
+  .border-curso { border-left-color: var(--success); }
+  .border-riesgo { border-left-color: var(--danger); }
+  .border-pausado { border-left-color: var(--warning); }
+  .border-completado { border-left-color: var(--text-muted); }
+
   .btn { padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; transition: 0.2s; font-size: 14px; text-align: center; }
   .btn-primary { background: var(--primary); color: white; width: 100%; }
   @media (min-width: 600px) { .btn-primary { width: auto; } }
@@ -87,11 +80,6 @@
 
   .comment-log { margin-top: 10px; border-left: 2px solid var(--border); padding-left: 0.75rem; }
   .comment-item { background: white; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-
-  .border-curso { border-left-color: var(--success); }
-  .border-riesgo { border-left-color: var(--danger); }
-  .border-pausado { border-left-color: var(--warning); }
-  .border-completado { border-left-color: var(--text-muted); }
 </style>
 </head>
 <body>
@@ -99,11 +87,11 @@
 <nav class="nav">
   <div class="nav-brand">
     <img src="LOGOS-4-MARCAS_Mesa-de-trabajo-1.png" alt="Colgas" class="logo-header">
-    <span class="brand-text">| TORRE DE CONTROL</span>
+    <div class="brand-text">| SEGUIMIENTO PROYECTOS</div>
   </div>
   <div class="nav-tabs">
-    <button id="btn-dashboard" class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
-    <button id="btn-gestion" class="tab-btn" onclick="switchTab('gestion', this)">Gestión</button>
+    <button class="tab-btn active" onclick="switchTab('dashboard', this)">Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('gestion', this)">Gestión</button>
   </div>
 </nav>
 
@@ -127,7 +115,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <script>
-// CONFIGURACIÓN ÚNICA
 const firebaseConfig = {
   apiKey: "AIzaSyDqJ_ypWjmWPJbe65pCW_GqPCzZCNh4zsg",
   authDomain: "gestion-de-proyectos-3312c.firebaseapp.com",
@@ -144,7 +131,6 @@ const db = firebase.database();
 let projects = [];
 let openCards = new Set(); 
 
-// ESCUCHAR LA NUBE
 db.ref("projects").on("value", (snapshot) => {
   const data = snapshot.val();
   projects = data ? Object.values(data) : [];
@@ -154,7 +140,6 @@ db.ref("projects").on("value", (snapshot) => {
 
 function save() { db.ref("projects").set(projects); }
 
-// CAMBIO DE PESTAÑAS SEGURO
 function switchTab(tab, btn) {
   document.getElementById('view-gestion').classList.toggle('hidden', tab !== 'gestion');
   document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
@@ -172,7 +157,7 @@ function addProject() {
 }
 
 function deleteProject(pid) {
-  if(confirm("¿Eliminar proyecto definitivamente?")) {
+  if(confirm("¿Eliminar proyecto?")) {
     projects = projects.filter(p => p.id !== pid);
     openCards.delete(pid.toString());
     save();
@@ -181,16 +166,13 @@ function deleteProject(pid) {
 
 function updateProjectStatus(pid, status) {
   const p = projects.find(proj => proj.id === pid);
-  if(p) {
-    p.status = status;
-    save();
-  }
+  if(p) { p.status = status; save(); }
 }
 
 function renderProjects() {
   const container = document.getElementById("projectsList");
   if(projects.length === 0) {
-    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">No hay proyectos creados.</p>`;
+    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Cargando...</p>`;
     return;
   }
   container.innerHTML = projects.map(p => {
@@ -262,4 +244,53 @@ function renderBlockers(p) {
           </div>
         `).join('')}
       </div>
-      <div style="
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px">
+        <input type="text" id="ctext-${b.id}" placeholder="Seguimiento...">
+        <button class="btn btn-primary" style="padding: 10px;" onclick="addComment(${p.id}, ${b.id})">Anotar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addComment(pid, bid) {
+  const text = document.getElementById(`ctext-${bid}`).value;
+  if(!text) return;
+  const date = new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+  const p = projects.find(proj=>proj.id===pid);
+  const b = p.blockers.find(block=>block.id===bid);
+  if(!b.comments) b.comments = [];
+  b.comments.push({ text, status: 'pendiente', date });
+  openCards.add(pid.toString());
+  save();
+}
+
+function updateCommentStatus(pid, bid, cIdx, status) {
+  const p = projects.find(proj=>proj.id===pid);
+  const b = p.blockers.find(block=>block.id===bid);
+  b.comments[cIdx].status = status;
+  save();
+}
+
+function renderDashboard() {
+  const actives = projects.filter(p => p.status !== 'completado').length;
+  const riesgo = projects.filter(p => p.status === 'en riesgo').length;
+  const totalInt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Interno').length, 0);
+  const totalExt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Externo').length, 0);
+
+  document.getElementById("kpiRow").innerHTML = `
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">ACTIVOS</span><div class="kpi-val">${actives}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">RIESGO</span><div class="kpi-val" style="color:var(--danger)">${riesgo}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">INT.</span><div class="kpi-val">${totalInt}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">EXT.</span><div class="kpi-val">${totalExt}</div></div>
+  `;
+
+  document.getElementById("dashGrid").innerHTML = projects.map(p => {
+    let allLogs = [];
+    if(p.blockers) p.blockers.forEach(b => (b.comments || []).forEach(c => allLogs.push({ ...c, blockerText: b.text })));
+    allLogs.reverse();
+
+    return `
+      <div class="summary-card border-${p.status.split(' ')[1] || p.status}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <h3 style="font-size:1.1rem; flex:1; padding-right:10px;">${p.name}</h3>
+          <span class="tag" style="background
