@@ -15,6 +15,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text-main); font-size: 14px; -webkit-tap-highlight-color: transparent; }
 
+  /* Navigation */
   .nav { background: var(--primary); padding: 0 1rem; display: flex; flex-direction: column; justify-content: center; height: auto; min-height: 65px; color: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
   .nav-brand { font-weight: 800; font-size: 1rem; text-align: center; padding: 10px 0 5px 0; letter-spacing: 0.5px; }
   .nav-tabs { display: flex; justify-content: center; width: 100%; }
@@ -24,12 +25,14 @@
   .container { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
   .hidden { display: none; }
 
+  /* KPI Cards */
   .kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
   @media (min-width: 768px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
   
   .kpi-card { background: white; padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
   .kpi-val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
+  /* Card Style */
   .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
   .card-header { padding: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; cursor: pointer; background: white; gap: 10px; }
   .card-body { padding: 1rem; border-top: 1px solid var(--border); }
@@ -91,11 +94,217 @@
 <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
 <script>
-// CONFIGURACIÓN DE FIREBASE (TU DATA)
+// CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDqJ_ypWjmWPJbe65pCW_GqPCzZCNh4zsg",
   authDomain: "gestion-de-proyectos-3312c.firebaseapp.com",
   projectId: "gestion-de-proyectos-3312c",
   storageBucket: "gestion-de-proyectos-3312c.firebasestorage.app",
   messagingSenderId: "167286573790",
-  appId: "1:167286
+  appId: "1:167286573790:web:28b53654d679edc78ad04f",
+  measurementId: "G-1VYCWZ0KMR"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let projects = [];
+let openCards = new Set(); 
+
+// Escuchar cambios de la nube
+db.ref("projects").on("value", (snapshot) => {
+  const data = snapshot.val();
+  projects = data ? Object.values(data) : [];
+  renderDashboard();
+  renderProjects();
+});
+
+function save() { db.ref("projects").set(projects); }
+
+function switchTab(tab, btn) {
+  document.getElementById('view-gestion').classList.toggle('hidden', tab !== 'gestion');
+  document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(tab === 'dashboard') renderDashboard();
+  else renderProjects();
+}
+
+function addProject() {
+  const name = prompt("Nombre del Proyecto:");
+  if(!name) return;
+  projects.push({ id: Date.now(), name, status: 'en curso', blockers: [] });
+  save();
+}
+
+function deleteProject(pid) {
+  if(confirm("¿Eliminar proyecto?")) {
+    projects = projects.filter(p => p.id !== pid);
+    openCards.delete(pid.toString());
+    save();
+  }
+}
+
+function updateProjectStatus(pid, status) {
+  projects.find(p => p.id === pid).status = status;
+  save();
+}
+
+function renderProjects() {
+  const container = document.getElementById("projectsList");
+  if(projects.length === 0) {
+    container.innerHTML = `<p style="text-align:center; padding:2rem; color:var(--text-muted)">Cargando...</p>`;
+    return;
+  }
+  container.innerHTML = projects.map(p => {
+    const isVisible = openCards.has(p.id.toString()) ? "" : "hidden";
+    return `
+    <div class="card" id="card-${p.id}">
+      <div class="card-header" onclick="toggleBody('body-${p.id}', '${p.id}')">
+        <div style="flex: 1; min-width: 200px;">
+           <strong style="font-size:1.1rem; display:block; margin-bottom:5px;">${p.name}</strong>
+           <select onclick="event.stopPropagation()" onchange="updateProjectStatus(${p.id}, this.value)" style="padding:5px; font-size:12px; width: auto;">
+             <option value="en curso" ${p.status==='en curso'?'selected':''}>En curso</option>
+             <option value="en riesgo" ${p.status==='en riesgo'?'selected':''}>En riesgo</option>
+             <option value="pausado" ${p.status==='pausado'?'selected':''}>Pausado</option>
+             <option value="completado" ${p.status==='completado'?'selected':''}>Completado</option>
+           </select>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center">
+          <button class="btn-danger-outline" onclick="event.stopPropagation(); deleteProject(${p.id})">Borrar</button>
+          <span style="font-size: 1.2rem;">▼</span>
+        </div>
+      </div>
+      <div class="card-body ${isVisible}" id="body-${p.id}">
+        <div style="background:#f1f5f9; padding:1rem; border-radius:8px; margin-bottom:1.5rem">
+          <h4 style="margin-bottom:10px; font-size: 0.9rem;">Registrar Bloqueo</h4>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <select id="ntype-${p.id}" style="width:120px;"><option>Interno</option><option>Externo</option></select>
+            <input type="text" id="ntext-${p.id}" placeholder="Descripción del bloqueo...">
+            <button class="btn btn-primary" onclick="addBlocker(${p.id})">Añadir</button>
+          </div>
+        </div>
+        <div id="blockers-${p.id}">${renderBlockers(p)}</div>
+      </div>
+    </div>
+  `;}).join('');
+}
+
+function addBlocker(pid) {
+  const type = document.getElementById(`ntype-${pid}`).value;
+  const text = document.getElementById(`ntext-${pid}`).value;
+  if(!text) return;
+  const p = projects.find(p => p.id === pid);
+  if(!p.blockers) p.blockers = [];
+  p.blockers.push({ id: Date.now(), type, text, comments: [] });
+  openCards.add(pid.toString());
+  save();
+}
+
+function renderBlockers(p) {
+  if(!p.blockers) return '';
+  return p.blockers.map(b => `
+    <div class="blocker-box">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <span class="tag tag-${b.type.toLowerCase()}">${b.type}</span>
+        <button style="border:none; background:none; font-size: 1.1rem; cursor:pointer;" onclick="deleteBlocker(${p.id},${b.id})">🗑️</button>
+      </div>
+      <p style="font-weight:700; margin:10px 0; font-size: 1rem;">${b.text}</p>
+      <div class="comment-log">
+        ${(b.comments || []).map((c, idx) => `
+          <div class="comment-item">
+            <div style="display:flex; flex-direction:column; margin-bottom:8px">
+              <select class="status-select" onchange="updateCommentStatus(${p.id}, ${b.id}, ${idx}, this.value)">
+                <option value="pendiente" ${c.status==='pendiente'?'selected':''}>⏳ PENDIENTE</option>
+                <option value="hecho" ${c.status==='hecho'?'selected':''}>✅ HECHO</option>
+                <option value="atrasado" ${c.status==='atrasado'?'selected':''}>🚨 ATRASADO</option>
+              </select>
+              <small style="color:var(--text-muted); font-weight:700; margin-top:4px">${c.date}</small>
+            </div>
+            <div style="line-height:1.4">${c.text}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px">
+        <input type="text" id="ctext-${b.id}" placeholder="Seguimiento...">
+        <button class="btn btn-primary" style="padding: 10px;" onclick="addComment(${p.id}, ${b.id})">Anotar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addComment(pid, bid) {
+  const text = document.getElementById(`ctext-${bid}`).value;
+  if(!text) return;
+  const date = new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+  const b = projects.find(p=>p.id===pid).blockers.find(b=>b.id===bid);
+  if(!b.comments) b.comments = [];
+  b.comments.push({ text, status: 'pendiente', date });
+  openCards.add(pid.toString());
+  save();
+}
+
+function updateCommentStatus(pid, bid, cIdx, status) {
+  projects.find(p=>p.id===pid).blockers.find(b=>b.id===bid).comments[cIdx].status = status;
+  save();
+}
+
+function renderDashboard() {
+  const actives = projects.filter(p => p.status !== 'completado').length;
+  const riesgo = projects.filter(p => p.status === 'en riesgo').length;
+  const totalInt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Interno').length, 0);
+  const totalExt = projects.reduce((acc, p) => acc + (p.blockers || []).filter(b => b.type === 'Externo').length, 0);
+
+  document.getElementById("kpiRow").innerHTML = `
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">ACTIVOS</span><div class="kpi-val">${actives}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">RIESGO</span><div class="kpi-val" style="color:var(--danger)">${riesgo}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">INT.</span><div class="kpi-val">${totalInt}</div></div>
+    <div class="kpi-card"><span style="font-size:10px; font-weight:700; color:var(--text-muted)">EXT.</span><div class="kpi-val">${totalExt}</div></div>
+  `;
+
+  document.getElementById("dashGrid").innerHTML = projects.map(p => {
+    let allLogs = [];
+    if(p.blockers) p.blockers.forEach(b => (b.comments || []).forEach(c => allLogs.push({ ...c, blockerText: b.text })));
+    allLogs.reverse();
+
+    return `
+      <div class="summary-card border-${p.status.split(' ')[1] || p.status}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <h3 style="font-size:1.1rem; flex:1; padding-right:10px;">${p.name}</h3>
+          <span class="tag" style="background:#f1f5f9">${p.status}</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:10px; font-size:11px; color:var(--text-muted)">
+          <span><b>${p.blockers ? p.blockers.length : 0}</b> Bloqueos</span>
+        </div>
+        <div class="dash-log-section">
+          ${allLogs.length > 0 ? allLogs.map(l => `
+            <div class="dash-log-item">
+              <span style="font-weight:700; color:${l.status==='hecho'?'var(--success)':l.status==='atrasado'?'var(--danger)':'var(--warning)'}">${l.status.toUpperCase()}</span> | <small>${l.date}</small><br>
+              <span style="display:block; margin-top:2px;">» ${l.text}</span>
+            </div>
+          `).join('') : '<div style="font-size:11px; color:var(--text-muted); padding:5px 0;">Sin comentarios.</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleBody(id, pid) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+  if (el.classList.contains('hidden')) openCards.delete(pid.toString());
+  else openCards.add(pid.toString());
+}
+
+function deleteBlocker(pid, bid) {
+  if(confirm("¿Eliminar bloqueo?")) {
+    const p = projects.find(p=>p.id===pid);
+    p.blockers = p.blockers.filter(b=>b.id!==bid);
+    save();
+  }
+}
+
+renderDashboard();
+</script>
+</body>
+</html>
